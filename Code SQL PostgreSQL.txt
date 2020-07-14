@@ -1,0 +1,36 @@
+#Création de la table sur PostgreSQL
+CREATE TABLE public."AIS-info"
+(
+    "Timestamp" timestamp without time zone,
+    "Type of mobile" character varying,
+    "MMSI" double precision,
+    "Latitude" double precision,
+    "Longitude" double precision,
+    "Navigational status" character varying,
+    "ROT" double precision,
+    "SOG" double precision,
+    "COG" double precision,
+    "Heading" double precision,
+    "IMO" character varying,
+    "Callsign" character varying,
+    "Name" character varying,
+    "Ship type" character varying,
+    "Cargo type" character varying,
+    "Width" double precision,
+    "Length" double precision,
+    "Type of position fixing device message" character varying,
+    "Draught" double precision,
+    "Destination" character varying,
+    "ETA" time without time zone,
+    "Data source type" character varying,
+    "Size A" integer,
+    "Size B" integer,
+    "Size C" integer,
+    "Size D" integer
+);
+
+ALTER TABLE public."AIS-info"
+    OWNER to postgres;
+
+#Création de l'hypertable permettant d'utiliser les fonctions de l'extention Timescaledb
+SELECT create_hypertable('public."AIS-info"','Timestamp');
