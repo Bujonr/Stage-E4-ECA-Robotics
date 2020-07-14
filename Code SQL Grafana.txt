@@ -1,0 +1,82 @@
+#Le nombre de bateaux differents dans la zone étudié à un timestamp donné
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS """Nbr MMSI"""
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp")
+GROUP BY 1
+ORDER BY 1
+
+#Le nombre de bateaux differents dans la zone étudié à un timestamp donné en fonction de son type ( Class A / Class B / Base station / AtoN ) sur le même graphique
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS """Class A"""
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Type of mobile" = 'Class A'
+GROUP BY 1
+ORDER BY 1
+
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS """Class B"""
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Type of mobile" = 'Class B'
+GROUP BY 1
+ORDER BY 1
+
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS """Base Station"""
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Type of mobile" = 'Base Station'
+GROUP BY 1
+ORDER BY 1
+
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS """AtoN"""
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Type of mobile" = 'AtoN'
+GROUP BY 1
+ORDER BY 1
+
+#Le nombre de bateaux differents dans la zone étudié à un timestamp fixé en fonction de son type ( Towing / Medical / Fishing / etc ... ) sur le même bar gauge
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS "Towing"
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Ship type" = 'Towing'
+GROUP BY 1
+ORDER BY 1
+
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS "Medical"
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Ship type" = 'Medical'
+GROUP BY 1
+ORDER BY 1
+
+SELECT
+  $__timeGroupAlias("Timestamp",1s),
+  count("MMSI") AS "Fishing"
+FROM "AIS-info"
+WHERE
+  $__timeFilter("Timestamp") AND
+  "Ship type" = 'Fishing'
+GROUP BY 1
+ORDER BY 1
+
