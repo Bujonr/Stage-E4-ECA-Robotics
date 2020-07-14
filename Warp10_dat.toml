@@ -1,0 +1,230 @@
+# Where checkpoints file persists
+data_dir = "./vector/checkpoints"
+
+# TS/LAT:LON/ELEV NAME{LABELS}{ATTRIBUTES} VALUE
+
+# TODO : Set mission to attributes
+# Set date to labels
+
+[sources.dat_files]
+  type = "file"
+  include = [
+    "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/Données AIS/*/*/*/DonneesAIS*.csv",
+  ]
+  fingerprinting.strategy = "checksum"
+  fingerprinting.fingerprint_bytes = 256
+  fingerprinting.ignored_header_bytes = 256
+
+
+[transforms.dat_read]
+  type = "grok_parser" # required
+  inputs = ["dat_files"] # required
+  drop_field = true
+  field = "message"
+  pattern = "%{TIMESTAMP_ISO8601:Timestamp}\\,%{BASE10NUM:Latitude}\\,%{BASE10NUM:Longitude}\\,%{BASE10NUM:MMSI}\\,%{GREEDYDATA:field_value}\\r"
+
+[[tests]]
+  # General
+  name = "dat_read test" # required
+
+  # Inputs
+  [[tests.inputs]]
+    insert_at = "dat_read" # required
+    type = "raw" # required
+    value = "2020-04-16 08:19:58,55.05888,-10.619298,219023945,15.782000000\r" # required, required when type = "raw"
+
+  # Outputs
+  [[tests.outputs]]
+    extract_from = "dat_read" # required
+
+    [[tests.outputs.conditions]]
+      type = "check_fields"
+      "Timestamp.eq" = "2020-04-16 08:19:58" # example
+      "Latitude.eq" = "55.05888" # example
+      "Longitude.eq" = "-10.619298" # example
+      "MMSI.eq" = "219023945" # example
+      "field_value.eq" = "15.782000000" # example
+
+[[tests]]
+  # General
+  name = "dat_read test 2" # required
+
+  # Inputs
+  [[tests.inputs]]
+    insert_at = "dat_read" # required
+    type = "raw" # required
+    value = "2020-04-16 08:19:58,55.05888,-10.619298,219023945,15.782000000,DISABLED\r" # required, required when type = "raw"
+
+  # Outputs
+  [[tests.outputs]]
+    extract_from = "dat_read" # required
+
+    [[tests.outputs.conditions]]
+      type = "check_fields"
+      "Timestamp.eq" = "2020-04-16 08:19:58" # example
+      "Latitude.eq" = "55.05888" # example
+      "Longitude.eq" = "-10.619298" # example
+      "MMSI.eq" = "219023945" # example
+      "field_value.eq" = "15.782000000,DISABLED" # example
+
+[transforms.dat_filter]
+  type = "filter"
+  inputs = ["dat_read"]
+  condition.type = "check_fields"
+  condition."Timestamp.regex" = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}"
+
+[[tests]]
+  # General
+  name = "dat_filter test" # required
+
+  # Inputs
+  [[tests.inputs]]
+    insert_at = "dat_read" # required
+    type = "raw" # required
+    value = "2020-04-16T08:19:58.54,55.05888,-10.619298,219023945,15.782000000,DISABLED\r" # required, required when type = "raw"
+
+  # Outputs
+  [[tests.outputs]]
+    extract_from = "dat_filter" # required
+
+    [[tests.outputs.conditions]]
+      type = "check_fields"
+      "Timestamp.eq" = "2020-04-16T08:19:58.54" # example
+      "Latitude.eq" = "55.05888" # example
+      "Longitude.eq" = "-10.619298" # example
+      "MMSI.eq" = "219023945" # example
+      "field_value.eq" = "15.782000000,DISABLED" # example
+
+[transforms.dat_unix_timestamp]
+  type = "lua"
+  inputs = ["dat_filter"]
+  version = "2"
+  hooks.process = """
+  function (event, emit)
+    -- Create column timestamp
+    event.log.timestamp = event.log.Timestamp
+
+    -- Convert to unix timestamp with nanosecond
+    timestamp_pattern = "(%d%d%d%d)[-](%d%d)[-](%d%d)T(%d%d):(%d%d):(%d%d)"
+    local year, month, day, hour, min, sec = string.match(event.log.timestamp, timestamp_pattern)
+    event.log.print_timestamp = os.time{year=year, month=month, day=day, hour=hour, min=min, sec=sec} * 1000000
+
+    -- Add number to multi-value field
+    if string.find(event.log.field_value, ",") then
+      cnt=1
+      event.log.field_value = string.gsub(event.log.field_value, ",", function (s)
+          cnt = cnt + 1
+          return " " .. cnt .. "/"
+      end)
+      event.log.field_value = string.gsub("[ 1/" .. event.log.field_value .. " ]", "/U ", "/NaN ")
+    else
+      event.log.field_value = string.gsub(event.log.field_value, "U", "NaN")
+    end
+
+    emit(event) -- emit the transformed event
+  end
+"""
+
+[[tests]]
+  # General
+  name = "dat_unix_timestamp test" # required
+
+  # Inputs
+  [[tests.inputs]]
+    insert_at = "dat_read" # required
+    type = "raw" # required
+    value = "2020-04-16T08:19:58,55.05888,-10.619298,219023945,15.782000000,DISABLED\r" # required, required when type = "raw"
+
+  # Outputs
+  [[tests.outputs]]
+    extract_from = "dat_unix_timestamp" # required
+
+    [[tests.outputs.conditions]]
+      type = "check_fields"
+      "Timestamp.eq" = "2020-04-16T08:19:58" # example
+      "Latitude.eq" = "55.05888" # example
+      "Longitude.eq" = "-10.619298" # example
+      "MMSI.eq" = "219023945" # example
+      "field_value.eq" = "[ 1/15.782000000 2/DISABLED ]"
+
+[[tests]]
+  # General
+  name = "dat_unix_timestamp test 2" # required
+
+  # Inputs
+  [[tests.inputs]]
+    insert_at = "dat_read" # required
+    type = "raw" # required
+    value = "2020-04-16T08:19:58,55.05888,-10.619298,219023945,15.782000000\r" # required, required when type = "raw"
+
+  # Outputs
+  [[tests.outputs]]
+    extract_from = "dat_unix_timestamp" # required
+
+    [[tests.outputs.conditions]]
+      type = "check_fields"
+      "Timestamp.eq" = "2020-04-16T08:19:58" # example
+      "Latitude.eq" = "55.05888" # example
+      "Longitude.eq" = "-10.619298" # example
+      "MMSI.eq" = "219023945" # example
+      "field_value.eq" = "15.782000000"
+
+#Set the mssion mesurments as required
+[transforms.dat_set_labels]
+  type = "add_fields"
+  inputs = ["dat_unix_timestamp"]
+  fields.field_key = "AIS" 
+  fields.close = "}"
+  fields.agent_key = "{MMSI="
+
+[transforms.dat_create_message]
+  type = "concat"
+  inputs = ["dat_set_labels"]
+  items = ["field_key", "agent_key", "MMSI", "close"]
+  joiner = ""
+  target = "message"
+
+[transforms.dat_add_field_value]
+  type = "concat"
+  inputs = ["dat_create_message"]
+  items = ["message", "field_value"]
+  joiner = " "
+  target = "message"
+
+[transforms.dat_lon]
+  type = "concat"
+  inputs = ["dat_add_field_value"]
+  items = ["Longitude", "message"]
+  joiner = " "
+  target = "message"
+
+[transforms.dat_lat]
+  type = "concat"
+  inputs = ["dat_add_lon"]
+  items = ["Latitude", "message"]
+  joiner = ":"
+  target = "message"  
+
+[transforms.dat_add_timestamp]
+  type = "concat"
+  inputs = ["dat_add_value"]
+  items = ["print_timestamp", "message"]
+  joiner = "/"
+  target = "message"
+
+[transforms.dat_writting_timestamp]
+  type = "coercer"
+  inputs = ["dat_add_timestamp"]
+  types.timestamp = "timestamp|%YT/%m/%d%H:%M:%S%"
+
+[sinks.dat_GTS]
+  type = "file"
+  inputs = ["dat_writting_timestamp"]
+  path = "./vector/output/dat-S%W.gts"
+  encoding.codec = "text"
+
+[sinks.console]
+  type = "console"
+  inputs = ["dat_writting_timestamp"]
+  encoding.only_fields = ["message"]
+  encoding.codec = "json"
