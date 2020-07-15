@@ -9,7 +9,7 @@ data_dir = "./vector/checkpoints"
 [sources.dat_files]
   type = "file"
   include = [
-    "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/Données AIS/*/*/*/DonneesAIS*.csv",
+    "/Stage E4 Eca Robotics/Données AIS/*/*/*/DonneesAIS*.csv",
   ]
   fingerprinting.strategy = "checksum"
   fingerprinting.fingerprint_bytes = 256
@@ -223,8 +223,8 @@ data_dir = "./vector/checkpoints"
   path = "./vector/output/dat-S%W.gts"
   encoding.codec = "text"
 
-[sinks.console]
-  type = "console"
-  inputs = ["dat_writting_timestamp"]
-  encoding.only_fields = ["message"]
-  encoding.codec = "json"
+#[sinks.console]
+#  type = "console"
+#  inputs = ["dat_writting_timestamp"]
+#  encoding.only_fields = ["message"]
+#  encoding.codec = "json"
