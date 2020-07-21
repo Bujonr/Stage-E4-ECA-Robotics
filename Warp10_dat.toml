@@ -198,7 +198,7 @@ data_dir = "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/Vector/checkpoints"
   type = "concat"
   inputs = ["dat_add_field_value"]
   items = ["Longitude", "message"]
-  joiner = " "
+  joiner = "/ "
   target = "message"
 
 [transforms.dat_add_lat]
@@ -223,7 +223,7 @@ data_dir = "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/Vector/checkpoints"
 [sinks.dat_GTS]
   type = "file"
   inputs = ["dat_writting_timestamp"]
-  path = "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/vector/output/dat-Warp10.gts"
+  path = "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/vector/output/dat-Warp10-vf.gts"
   encoding.codec = "text"
 
 #[sinks.console]
