@@ -118,10 +118,22 @@ data_dir = "C:/Users/Remi_/Desktop/Stage E4 Eca Robotics/Vector/checkpoints"
           cnt = cnt + 1
           return " " .. cnt .. "/"
       end)
-      event.log.field_value = string.gsub("[ 1/" .. event.log.field_value .. " ]", "/U ", "/NaN ")
-    else
-      event.log.field_value = string.gsub(event.log.field_value, "U", "NaN")
+      --Remove all unwanted elements to have a correct GTS format
+      event.log.field_value = string.gsub("[ 1/" .. event.log.field_value .. " ]", "%d/Unknown ", " ")
+      event.log.field_value = string.gsub(event.log.field_value, "%d/Undefined ", " ")
+      event.log.field_value = string.gsub(event.log.field_value, "%d/UNKNOWN ", " ")
+      event.log.field_value = string.gsub(event.log.field_value, "value", " ")
+      event.log.field_value = string.gsub(event.log.field_value, "%d%d/ ", " ")
+      event.log.field_value = string.gsub(event.log.field_value, "%d/ ", " ")
+      event.log.field_value = string.gsub(event.log.field_value, " %d ", " ")
+      while string.find(event.log.field_value, "  ") do
+          event.log.field_value = string.gsub(event.log.field_value, "  ", " ")
+      end
     end
+    --Add '"' and "_" when data is a string
+    event.log.field_value = string.gsub(event.log.field_value, "([%a_]+)", '"' .. "%1" .. '"')
+    event.log.field_value = string.gsub(event.log.field_value, '" "', "_")
+
     emit(event) -- emit the transformed event
   end
 """
